@@ -1,0 +1,49 @@
+services:
+  - type: web
+    name: restaurant-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_PATH
+        value: /tmp/database.sqlite
+      - key: TAX_RATE
+        value: "0.13"
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        fromService:
+          name: restaurant-frontend
+          type: web
+          property: host
+          prefix: "https://"
+
+  - type: web
+    name: restaurant-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: restaurant-backend
+          type: web
+          property: host
+          prefix: "https://"
+      - key: VITE_SOCKET_URL
+        fromService:
+          name: restaurant-backend
+          type: web
+          property: host
+          prefix: "https://"
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
