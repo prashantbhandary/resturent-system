@@ -1,34 +1,80 @@
+import { X, Banknote, CreditCard, CheckCircle } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
+import { Badge } from '../ui/badge';
+import { formatCurrency } from '../../lib/utils';
+
 export default function BillViewer({ bill, order, onPay, onClose }) {
   return (
-    <div>
-      <div className="flex justify-between items-start mb-3">
+    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-card">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-border flex items-center justify-between">
         <div>
           <h2 className="font-bold text-lg">Bill #{bill.id}</h2>
-          <div className="text-xs text-slate-500">Table {bill.table_number}</div>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-sm text-muted-foreground">Table {bill.table_number}</span>
+            <Badge variant="warning">Pending Payment</Badge>
+          </div>
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-700">✕</button>
+        <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-secondary transition-colors text-muted-foreground">
+          <X size={18} />
+        </button>
       </div>
 
-      <ul className="space-y-1">
-        {(order?.items || []).map((it) => (
-          <li key={it.id} className="flex justify-between text-sm">
-            <span>{it.quantity}× {it.name_snapshot}</span>
-            <span>₹{(it.price_at_time * it.quantity).toFixed(2)}</span>
-          </li>
-        ))}
-      </ul>
+      {/* Line items */}
+      <div className="p-6">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-muted-foreground border-b border-border">
+              <th className="text-left pb-2 font-medium">Item</th>
+              <th className="text-center pb-2 font-medium w-12">Qty</th>
+              <th className="text-right pb-2 font-medium">Amount</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {(order?.items || []).map((it) => (
+              <tr key={it.id}>
+                <td className="py-2.5">{it.name_snapshot}</td>
+                <td className="py-2.5 text-center text-muted-foreground">{it.quantity}</td>
+                <td className="py-2.5 text-right font-medium">{formatCurrency(it.price_at_time * it.quantity)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-      <div className="border-t mt-3 pt-3 space-y-1 text-sm">
-        <div className="flex justify-between"><span>Subtotal</span><span>₹{bill.subtotal.toFixed(2)}</span></div>
-        <div className="flex justify-between"><span>Tax (13%)</span><span>₹{bill.tax.toFixed(2)}</span></div>
-        <div className="flex justify-between font-bold text-lg pt-2">
-          <span>Total</span><span>₹{bill.total.toFixed(2)}</span>
+        <div className="mt-4 space-y-2">
+          <Separator />
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>Subtotal</span><span>{formatCurrency(bill.subtotal)}</span>
+          </div>
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>Tax (13%)</span><span>{formatCurrency(bill.tax)}</span>
+          </div>
+          <Separator />
+          <div className="flex justify-between font-bold text-xl">
+            <span>Total</span>
+            <span className="text-primary">{formatCurrency(bill.total)}</span>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mt-5">
-        <button onClick={() => onPay('cash')} className="btn-success">💵 Cash Paid</button>
-        <button onClick={() => onPay('card')} className="btn-primary">💳 Card Paid</button>
+      {/* Payment buttons */}
+      <div className="px-6 pb-6 grid grid-cols-2 gap-3">
+        <Button
+          size="lg"
+          variant="outline"
+          onClick={() => onPay('cash')}
+          className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+        >
+          <Banknote size={18} /> Cash Paid
+        </Button>
+        <Button
+          size="lg"
+          onClick={() => onPay('card')}
+          className="gap-2 shadow-lg shadow-primary/20"
+        >
+          <CreditCard size={18} /> Card Paid
+        </Button>
       </div>
     </div>
   );

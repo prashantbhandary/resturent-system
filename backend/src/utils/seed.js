@@ -1,11 +1,16 @@
 const bcrypt = require('bcryptjs');
-const { initSchema, run, get } = require('../config/database');
+const { run, get } = require('../config/database');
+const { migrate } = require('../db/migrate');
 const { Category, Item } = require('../models/menu');
 const Table = require('../models/table');
+const Settings = require('../models/settings');
 
+// DEV-ONLY demo seeder. Production appliances are configured via the first-boot
+// provisioning wizard (POST /api/provisioning/setup) — never with these creds.
 async function seed() {
-  await initSchema();
-  console.log('Schema ready. Seeding...');
+  await migrate({ silent: true });
+  console.log('Schema ready. Seeding demo data...');
+  await Settings.setMany({ restaurant_name: 'DineQR Demo', provisioned: '1' });
 
   const adminEmail = 'admin@restaurant.local';
   const existing = await get('SELECT id FROM users WHERE email = ?', [adminEmail]);

@@ -1,6 +1,6 @@
 const Bill = require('../models/bill');
 const Order = require('../models/order');
-const { TAX_RATE } = require('../config/env');
+const config = require('./configService');
 
 async function generateBill(order_id) {
   const order = await Order.findWithItems(order_id);
@@ -12,8 +12,9 @@ async function generateBill(order_id) {
   const existing = await Bill.findByOrder(order_id);
   if (existing) return Bill.findById(existing.id);
 
+  const taxRate = await config.getTaxRate();
   const subtotal = order.items.reduce((s, i) => s + i.price_at_time * i.quantity, 0);
-  const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
+  const tax = Math.round(subtotal * taxRate * 100) / 100;
   const total = Math.round((subtotal + tax) * 100) / 100;
   return Bill.create({ order_id, subtotal, tax, total });
 }

@@ -5,8 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <meta name="theme-color" content="#f97316" />
     <title>Restaurant Order System</title>
+    <script>
+      // Zero-flash theme: apply persisted/system theme before first paint.
+      (function () {
+        try {
+          var stored = localStorage.getItem('dineqr_theme'); // 'light' | 'dark' | 'system' | null
+          var theme = stored || 'system';
+          var isDark =
+            theme === 'dark' ||
+            (theme === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', isDark);
+          document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body class="bg-slate-50">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

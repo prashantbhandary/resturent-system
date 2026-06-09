@@ -13,4 +13,7 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["sh", "-c", "node src/utils/seed.js || true && node src/server.js"]
+# Server runs migrations on boot, then serves. Production is configured via the
+# first-boot provisioning wizard — no demo accounts are seeded. For a local demo
+# with sample data, run `npm run seed` against the container instead.
+CMD ["node", "src/server.js"]

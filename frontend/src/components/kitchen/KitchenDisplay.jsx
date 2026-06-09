@@ -1,23 +1,48 @@
 import { useEffect, useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Wifi, WifiOff, ChefHat, LogOut, RefreshCw } from 'lucide-react';
 import { kitchenApi } from '../../services/api';
 import { useSocket } from '../../context/SocketContext';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../ui/toast';
 import OrderCard from './OrderCard.jsx';
 import LoadingSpinner from '../common/LoadingSpinner.jsx';
+
+const FILTERS = ['all', 'pending', 'accepted', 'preparing', 'ready'];
 
 export default function KitchenDisplay() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+  const [refreshing, setRefreshing] = useState(false);
   const { socket, connected } = useSocket();
   const { user, logout } = useAuth();
-  const audioRef = useRef(null);
+  const { toast } = useToast();
+  const audioCtxRef = useRef(null);
 
-  const load = async () => {
+  const playBeep = () => {
+    try {
+      if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = audioCtxRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
+    } catch (_) { /* user hasn't interacted yet */ }
+  };
+
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true);
+    else setRefreshing(true);
     try {
       const { data } = await kitchenApi.list();
       setOrders(data.orders || []);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -25,13 +50,8 @@ export default function KitchenDisplay() {
 
   useEffect(() => {
     if (!socket) return;
-    const onNew = () => {
-      load();
-      if (audioRef.current) {
-        try { audioRef.current.play(); } catch (_e) { /* ignore */ }
-      }
-    };
-    const onUpdate = () => load();
+    const onNew = () => { load(true); playBeep(); };
+    const onUpdate = () => load(true);
     socket.on('order:created', onNew);
     socket.on('kitchen:new-order', onNew);
     socket.on('order:status-changed', onUpdate);
@@ -46,57 +66,109 @@ export default function KitchenDisplay() {
     };
   }, [socket]);
 
-  const accept = async (order_id) => {
-    await kitchenApi.setOrderStatus(order_id, 'accepted');
-    load();
+  const accept = async (id) => {
+    await kitchenApi.setOrderStatus(id, 'accepted');
+    load(true);
+    toast({ title: 'Order accepted', variant: 'success' });
   };
-  const markServed = async (order_id) => {
-    await kitchenApi.setOrderStatus(order_id, 'served');
-    load();
+  const markServed = async (id) => {
+    await kitchenApi.setOrderStatus(id, 'served');
+    load(true);
+    toast({ title: 'Marked as served', variant: 'success' });
   };
   const itemAction = async (order_id, item_id, status) => {
     await kitchenApi.setItemStatus(order_id, item_id, status);
-    load();
+    load(true);
   };
 
-  // beep tone via data URI
-  const beep = 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTAAAAA=';
+  const filtered = filter === 'all' ? orders : orders.filter((o) => o.status === filter);
+  const counts = FILTERS.reduce((acc, f) => {
+    acc[f] = f === 'all' ? orders.length : orders.filter((o) => o.status === f).length;
+    return acc;
+  }, {});
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
-      <header className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold">👨‍🍳 Kitchen Display</h1>
-          <div className="text-xs text-slate-400">
-            {connected ? '🟢 Connected' : '🔴 Disconnected'} · {orders.length} active orders
+    <div className="min-h-screen bg-slate-900 text-white flex flex-col">
+      {/* Header */}
+      <header className="border-b border-slate-700 px-5 py-3 flex items-center justify-between bg-slate-900/95 backdrop-blur sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
+            <ChefHat size={18} className="text-primary" />
+          </div>
+          <div>
+            <h1 className="font-bold text-base leading-none">Kitchen Display</h1>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {connected
+                ? <><Wifi size={11} className="text-emerald-400" /><span className="text-xs text-emerald-400">Live</span></>
+                : <><WifiOff size={11} className="text-red-400" /><span className="text-xs text-red-400">Disconnected</span></>
+              }
+              <span className="text-xs text-slate-500">· {orders.length} active</span>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {user && <span className="text-sm">{user.name}</span>}
-          <button onClick={logout} className="btn-secondary text-sm">Logout</button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => load(true)}
+            disabled={refreshing}
+            className="w-8 h-8 rounded-lg hover:bg-slate-700 flex items-center justify-center transition-colors text-slate-400"
+          >
+            <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+          </button>
+          <span className="text-sm text-slate-400 hidden sm:block">{user?.name}</span>
+          <button onClick={logout} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-slate-700 transition-colors">
+            <LogOut size={13} /> Logout
+          </button>
         </div>
       </header>
-      <audio ref={audioRef} src={beep} preload="auto" />
-      <main className="p-4">
+
+      {/* Filter tabs */}
+      <div className="flex gap-1 overflow-x-auto scrollbar-hide px-5 py-2.5 border-b border-slate-700/50">
+        {FILTERS.map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              filter === f ? 'bg-primary text-white' : 'text-slate-400 hover:bg-slate-800'
+            }`}
+          >
+            {f.charAt(0).toUpperCase() + f.slice(1)}
+            {counts[f] > 0 && (
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${filter === f ? 'bg-white/20' : 'bg-slate-700'}`}>
+                {counts[f]}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Orders grid */}
+      <main className="flex-1 p-4">
         {loading ? (
-          <LoadingSpinner label="Loading orders..." />
-        ) : orders.length === 0 ? (
-          <div className="text-center text-slate-400 py-20">
-            <div className="text-5xl mb-4">🍽️</div>
-            <p>No active orders. Waiting for new orders...</p>
-          </div>
+          <LoadingSpinner label="Loading orders…" className="text-slate-400 mt-12" />
+        ) : filtered.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center py-20 text-slate-500"
+          >
+            <ChefHat size={48} strokeWidth={1} className="mb-4" />
+            <p className="text-lg font-medium">No {filter === 'all' ? 'active' : filter} orders</p>
+            <p className="text-sm mt-1">Waiting for new orders…</p>
+          </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {orders.map((order) => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                onAccept={() => accept(order.id)}
-                onServed={() => markServed(order.id)}
-                onItemPreparing={(i) => itemAction(order.id, i, 'preparing')}
-                onItemReady={(i) => itemAction(order.id, i, 'ready')}
-              />
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <AnimatePresence>
+              {filtered.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  onAccept={() => accept(order.id)}
+                  onServed={() => markServed(order.id)}
+                  onItemPreparing={(itemId) => itemAction(order.id, itemId, 'preparing')}
+                  onItemReady={(itemId) => itemAction(order.id, itemId, 'ready')}
+                />
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </main>

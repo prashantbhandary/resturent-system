@@ -33,6 +33,16 @@ export const authApi = {
   me: () => api.get('/auth/me'),
 };
 
+export const configApi = {
+  get: () => api.get('/config'),
+  update: (data) => api.put('/config', data),
+};
+
+export const provisioningApi = {
+  status: () => api.get('/provisioning/status'),
+  setup: (data) => api.post('/provisioning/setup', data),
+};
+
 export const menuApi = {
   getMenu: () => api.get('/menu'),
 };

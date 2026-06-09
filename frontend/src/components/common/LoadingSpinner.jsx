@@ -1,8 +1,12 @@
-export default function LoadingSpinner({ label = 'Loading...' }) {
+import { Loader2 } from 'lucide-react';
+import { cn } from '../../lib/utils';
+
+export default function LoadingSpinner({ label = 'Loading...', className, size = 'default' }) {
+  const sizes = { sm: 16, default: 22, lg: 32 };
   return (
-    <div className="flex items-center justify-center gap-2 p-6 text-slate-500">
-      <div className="w-5 h-5 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
-      <span>{label}</span>
+    <div className={cn('flex flex-col items-center justify-center gap-3 py-10 text-muted-foreground', className)}>
+      <Loader2 size={sizes[size]} className="animate-spin text-primary" />
+      {label && <span className="text-sm">{label}</span>}
     </div>
   );
 }
