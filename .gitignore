@@ -13,6 +13,8 @@ dist/
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
+# ...but ship the backend demo database with the repo
+!backend/database.sqlite
 
 # os / editor
 .DS_Store
