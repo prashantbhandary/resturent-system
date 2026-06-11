@@ -1,0 +1,223 @@
+# The five business/platform services.
+#
+# In Kubernetes, Service objects + DNS replace our custom registry
+# (DISCOVERY_MODE=dns), and kube-proxy load-balances across pod replicas —
+# i.e. k8s natively provides the Service Discovery and Load Balancing the
+# compose setup demonstrates by hand. Liveness/readiness probes hit /health
+# (Health checks requirement).
+#
+# NOTE: images are built locally, e.g. for minikube:
+#   eval $(minikube docker-env)
+#   docker build -t restaurant/auth:lab    --build-arg SERVICE=auth    .
+#   docker build -t restaurant/menu:lab    --build-arg SERVICE=menu    .
+#   docker build -t restaurant/order:lab   --build-arg SERVICE=order   .
+#   docker build -t restaurant/billing:lab --build-arg SERVICE=billing .
+#   docker build -t restaurant/logging:lab --build-arg SERVICE=logging .
+#   docker build -t restaurant/gateway:lab --build-arg SERVICE=gateway .
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: restaurant
+spec:
+  replicas: 1            # owns a SQLite volume -> single writer
+  selector: { matchLabels: { app: auth-service } }
+  template:
+    metadata: { labels: { app: auth-service } }
+    spec:
+      containers:
+        - name: auth
+          image: restaurant/auth:lab
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: SERVICE_NAME, value: auth-service }
+            - { name: PORT, value: "4001" }
+            - { name: REDIS_URL, value: redis://redis:6379 }
+            - { name: DISCOVERY_MODE, value: dns }
+            - { name: DATA_DIR, value: /data }
+            - { name: JWT_SECRET, value: lab-secret-change-me }
+          ports: [{ containerPort: 4001 }]
+          volumeMounts: [{ name: data, mountPath: /data }]
+          livenessProbe:
+            httpGet: { path: /health, port: 4001 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /health, port: 4001 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: data
+          emptyDir: {}   # lab-grade persistence; use a PVC in production
+---
+apiVersion: v1
+kind: Service
+metadata: { name: auth-service, namespace: restaurant }
+spec:
+  selector: { app: auth-service }
+  ports: [{ port: 4001, targetPort: 4001 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: menu-service
+  namespace: restaurant
+spec:
+  replicas: 2            # scaled out: kube-proxy load-balances across pods
+  selector: { matchLabels: { app: menu-service } }
+  template:
+    metadata: { labels: { app: menu-service } }
+    spec:
+      containers:
+        - name: menu
+          image: restaurant/menu:lab
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: SERVICE_NAME, value: menu-service }
+            - { name: PORT, value: "4002" }
+            - { name: REDIS_URL, value: redis://redis:6379 }
+            - { name: DISCOVERY_MODE, value: dns }
+            - { name: DATA_DIR, value: /data }
+          ports: [{ containerPort: 4002 }]
+          volumeMounts: [{ name: data, mountPath: /data }]
+          livenessProbe:
+            httpGet: { path: /health, port: 4002 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /health, port: 4002 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata: { name: menu-service, namespace: restaurant }
+spec:
+  selector: { app: menu-service }
+  ports: [{ port: 4002, targetPort: 4002 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: restaurant
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: order-service } }
+  template:
+    metadata: { labels: { app: order-service } }
+    spec:
+      containers:
+        - name: order
+          image: restaurant/order:lab
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: SERVICE_NAME, value: order-service }
+            - { name: PORT, value: "4003" }
+            - { name: REDIS_URL, value: redis://redis:6379 }
+            - { name: DISCOVERY_MODE, value: dns }
+            - { name: DATA_DIR, value: /data }
+          ports: [{ containerPort: 4003 }]
+          volumeMounts: [{ name: data, mountPath: /data }]
+          livenessProbe:
+            httpGet: { path: /health, port: 4003 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /health, port: 4003 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata: { name: order-service, namespace: restaurant }
+spec:
+  selector: { app: order-service }
+  ports: [{ port: 4003, targetPort: 4003 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-service
+  namespace: restaurant
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: billing-service } }
+  template:
+    metadata: { labels: { app: billing-service } }
+    spec:
+      containers:
+        - name: billing
+          image: restaurant/billing:lab
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: SERVICE_NAME, value: billing-service }
+            - { name: PORT, value: "4004" }
+            - { name: REDIS_URL, value: redis://redis:6379 }
+            - { name: DISCOVERY_MODE, value: dns }
+            - { name: DATA_DIR, value: /data }
+            - { name: TAX_RATE, value: "0.13" }
+          ports: [{ containerPort: 4004 }]
+          volumeMounts: [{ name: data, mountPath: /data }]
+          livenessProbe:
+            httpGet: { path: /health, port: 4004 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /health, port: 4004 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata: { name: billing-service, namespace: restaurant }
+spec:
+  selector: { app: billing-service }
+  ports: [{ port: 4004, targetPort: 4004 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logging-service
+  namespace: restaurant
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: logging-service } }
+  template:
+    metadata: { labels: { app: logging-service } }
+    spec:
+      containers:
+        - name: logging
+          image: restaurant/logging:lab
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: SERVICE_NAME, value: logging-service }
+            - { name: PORT, value: "4005" }
+            - { name: REDIS_URL, value: redis://redis:6379 }
+            - { name: DISCOVERY_MODE, value: dns }
+          ports: [{ containerPort: 4005 }]
+          livenessProbe:
+            httpGet: { path: /health, port: 4005 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /health, port: 4005 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata: { name: logging-service, namespace: restaurant }
+spec:
+  selector: { app: logging-service }
+  ports: [{ port: 4005, targetPort: 4005 }]

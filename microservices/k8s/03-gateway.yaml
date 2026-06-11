@@ -1,0 +1,46 @@
+# API gateway: 2 stateless replicas (horizontal scaling) behind a NodePort.
+# kube-proxy load-balances client traffic across the gateway pods, and the
+# gateway in turn fans out to services via their DNS names (DISCOVERY_MODE=dns).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: restaurant
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: gateway } }
+  template:
+    metadata: { labels: { app: gateway } }
+    spec:
+      containers:
+        - name: gateway
+          image: restaurant/gateway:lab
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: SERVICE_NAME, value: gateway }
+            - { name: PORT, value: "8080" }
+            - { name: REDIS_URL, value: redis://redis:6379 }
+            - { name: DISCOVERY_MODE, value: dns }
+            - { name: RATE_LIMIT_PER_MIN, value: "100" }
+          ports: [{ containerPort: 8080 }]
+          livenessProbe:
+            httpGet: { path: /health, port: 8080 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /health, port: 8080 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: restaurant
+spec:
+  type: NodePort
+  selector: { app: gateway }
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080   # reach the system at http://<node-ip>:30080
