@@ -37,7 +37,9 @@ const app = express();
 app.set('trust proxy', true);
 app.use(express.json());
 app.use(traceMiddleware);
-app.use(rateLimiter);
+// Health/observability endpoints are exempt from rate limiting — monitoring
+// must keep working even when a client is being throttled.
+app.use((req, res, next) => (req.path.startsWith('/health') ? next() : rateLimiter(req, res, next)));
 
 // --- observability endpoints ---
 app.get('/health', (req, res) => res.json({ ok: true, service: 'gateway', uptime: process.uptime() }));
