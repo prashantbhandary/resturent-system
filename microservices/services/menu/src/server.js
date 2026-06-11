@@ -18,7 +18,7 @@ app.use(traceMiddleware);
 app.get('/api/menu', async (req, res, next) => {
   try {
     logger.info('menu listed', { traceId: req.traceId });
-    res.json({ items: await menuService.listMenu() });
+    res.json({ categories: await menuService.listMenuGrouped() });
   } catch (err) { next(err); }
 });
 

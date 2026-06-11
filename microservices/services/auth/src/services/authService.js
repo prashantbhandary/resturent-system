@@ -10,8 +10,15 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 async function seedDefaultUsers() {
   if (await users.findByEmail('admin@restaurant.local')) return;
-  const hash = await bcrypt.hash('admin123', 10);
-  await users.create({ email: 'admin@restaurant.local', password_hash: hash, name: 'Admin', role: 'admin' });
+  const demo = [
+    { email: 'admin@restaurant.local', password: 'admin123', name: 'Admin', role: 'admin' },
+    { email: 'chef@restaurant.local', password: 'chef123', name: 'Chef', role: 'chef' },
+    { email: 'billing@restaurant.local', password: 'billing123', name: 'Billing', role: 'billing' },
+  ];
+  for (const u of demo) {
+    const hash = await bcrypt.hash(u.password, 10);
+    await users.create({ email: u.email, password_hash: hash, name: u.name, role: u.role });
+  }
 }
 
 async function login({ email, password }) {

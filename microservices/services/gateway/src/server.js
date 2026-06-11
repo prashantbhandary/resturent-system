@@ -22,24 +22,58 @@ const ROUTES = [
   { prefix: '/api/auth', service: 'auth-service' },
   { prefix: '/api/menu', service: 'menu-service' },
   { prefix: '/api/orders', service: 'order-service' },
+  { prefix: '/api/kitchen', service: 'order-service' }, // kitchen view = orders
   { prefix: '/api/bills', service: 'billing-service' },
   { prefix: '/api/logs', service: 'logging-service' },
 ];
 
 // Routes that require a valid JWT (verified by auth-service).
 const PROTECTED = [
-  { method: 'PATCH', prefix: '/api/orders' }, // staff update order status
-  { method: 'GET', prefix: '/api/bills' },    // staff read bills
-  { method: 'POST', prefix: '/api/menu' },    // staff add menu items
+  { method: 'PATCH', prefix: '/api/orders' },  // staff update order status
+  { method: 'PATCH', prefix: '/api/kitchen' }, // kitchen staff actions
+  { method: 'GET', prefix: '/api/bills' },     // staff read bills
+  { method: 'POST', prefix: '/api/menu' },     // staff add menu items
 ];
 
 const app = express();
 app.set('trust proxy', true);
 app.use(express.json());
 app.use(traceMiddleware);
+// CORS: the React frontend (vite dev server on another port) calls the
+// gateway cross-origin. Hand-rolled like everything else in this lab.
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-trace-id');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 // Health/observability endpoints are exempt from rate limiting — monitoring
 // must keep working even when a client is being throttled.
 app.use((req, res, next) => (req.path.startsWith('/health') ? next() : rateLimiter(req, res, next)));
+
+// --- frontend compatibility stubs ---
+// The React frontend loads /api/config and /api/provisioning/status on boot.
+// In the monolith these come from a settings table; the lab stack serves a
+// static config from the gateway (system-wide config service would be the
+// "real" next step).
+app.get('/api/config', (req, res) =>
+  res.json({
+    config: {
+      restaurant_name: 'DineQR Microservices Lab',
+      currency_code: 'NPR',
+      currency_symbol: 'Rs',
+      locale: 'en-NP',
+      tax_rate: '0.13',
+      tax_label: 'VAT',
+      service_charge: '0',
+      brand_color: '#f97316',
+    },
+  })
+);
+app.get('/api/provisioning/status', (req, res) =>
+  res.json({ provisioned: true, restaurant_name: 'DineQR Microservices Lab' })
+);
 
 // --- observability endpoints ---
 app.get('/health', (req, res) => res.json({ ok: true, service: 'gateway', uptime: process.uptime() }));

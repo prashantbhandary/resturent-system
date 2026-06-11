@@ -20,7 +20,8 @@ async function fetchMenuItem(id, traceId) {
   return (await res.json()).item;
 }
 
-async function createOrder({ table_number, items }, traceId) {
+async function createOrder({ table_number, table_id, items }, traceId) {
+  table_number = table_number || table_id; // monolith frontend sends table_id
   if (!(table_number > 0) || !Array.isArray(items) || items.length === 0) {
     const err = new Error('table_number and items[] required');
     err.status = 400;
@@ -68,4 +69,19 @@ async function updateStatus(id, status, traceId) {
   return updated;
 }
 
-module.exports = { setPublisher, createOrder, updateStatus, list: repo.list, findById: repo.findById };
+async function updateItemStatus(orderId, itemId, status, traceId) {
+  const { changes } = await repo.updateItemStatus(orderId, itemId, status);
+  if (!changes) {
+    const err = new Error('Order item not found');
+    err.status = 404;
+    throw err;
+  }
+  logger.info(`order ${orderId} item ${itemId} -> ${status}`, { traceId });
+  return repo.findById(orderId);
+}
+
+module.exports = {
+  setPublisher, createOrder, updateStatus, updateItemStatus,
+  list: repo.list, findById: repo.findById,
+  listByTable: repo.listByTable, listActive: repo.listActive,
+};

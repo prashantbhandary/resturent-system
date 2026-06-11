@@ -25,6 +25,12 @@ app.get('/api/orders', async (req, res, next) => {
   catch (err) { next(err); }
 });
 
+// Customer order-status page: orders for one table.
+app.get('/api/orders/table/:tableId', async (req, res, next) => {
+  try { res.json({ orders: await orderService.listByTable(req.params.tableId) }); }
+  catch (err) { next(err); }
+});
+
 app.get('/api/orders/:id', async (req, res, next) => {
   try {
     const order = await orderService.findById(req.params.id);
@@ -35,6 +41,23 @@ app.get('/api/orders/:id', async (req, res, next) => {
 
 app.patch('/api/orders/:id/status', async (req, res, next) => {
   try { res.json({ order: await orderService.updateStatus(req.params.id, (req.body || {}).status, req.traceId) }); }
+  catch (err) { next(err); }
+});
+
+// Kitchen display routes (the monolith has a kitchen module; here the
+// kitchen view is just another face of order data, so order-service owns it).
+app.get('/api/kitchen/orders', async (req, res, next) => {
+  try { res.json({ orders: await orderService.listActive() }); }
+  catch (err) { next(err); }
+});
+
+app.patch('/api/kitchen/orders/:id/status', async (req, res, next) => {
+  try { res.json({ order: await orderService.updateStatus(req.params.id, (req.body || {}).status, req.traceId) }); }
+  catch (err) { next(err); }
+});
+
+app.patch('/api/kitchen/orders/:id/items/:itemId/status', async (req, res, next) => {
+  try { res.json({ order: await orderService.updateItemStatus(req.params.id, req.params.itemId, (req.body || {}).status, req.traceId) }); }
   catch (err) { next(err); }
 });
 

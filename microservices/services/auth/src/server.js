@@ -17,6 +17,7 @@ app.use(traceMiddleware);
 
 app.post('/api/auth/login', ctrl.login);
 app.get('/api/auth/verify', ctrl.verify);
+app.get('/api/auth/me', ctrl.verify); // frontend session-restore uses /me
 
 // Health check (lab requirement): used by Docker HEALTHCHECK and k8s probes.
 app.get('/health', (req, res) => res.json({ ok: true, service: 'auth-service', uptime: process.uptime() }));
