@@ -9,7 +9,7 @@ services:
       JWT_SECRET: dev-secret-change-me
       JWT_EXPIRES_IN: 7d
       DATABASE_PATH: /data/database.sqlite
-      CORS_ORIGIN: http://localhost:3000
+      CORS_ORIGIN: "*"
       TAX_RATE: "0.13"
       NODE_ENV: development
     volumes:
@@ -22,7 +22,8 @@ services:
     build: ./frontend
     container_name: restaurant-frontend
     ports:
-      - "3000:3000"
+      # host port is configurable: 3000 is often taken by other dev servers
+      - "${FRONTEND_PORT:-3002}:3000"
     environment:
       VITE_API_URL: http://localhost:${BACKEND_PORT:-5001}
       VITE_SOCKET_URL: http://localhost:${BACKEND_PORT:-5001}
