@@ -50,7 +50,8 @@ services:
       PORT: "4001"
       DATA_DIR: /data
       JWT_SECRET: lab-secret-change-me
-    volumes: [auth-data:/data]        # independent database, in Docker
+    volumes:
+      - ./data/auth:/data
     depends_on: { redis: { condition: service_healthy }, registry: { condition: service_started } }
     healthcheck: *http-health
 
@@ -62,7 +63,8 @@ services:
       SERVICE_NAME: menu-service
       PORT: "4002"
       DATA_DIR: /data
-    volumes: [menu-data:/data]        # independent database, in Docker
+    volumes:
+      - ./data/menu:/data
     depends_on: { redis: { condition: service_healthy }, registry: { condition: service_started } }
     healthcheck: *http-health
 
@@ -74,7 +76,8 @@ services:
       SERVICE_NAME: order-service
       PORT: "4003"
       DATA_DIR: /data
-    volumes: [order-data:/data]       # independent database, in Docker
+    volumes:
+      - ./data/order:/data
     depends_on: { redis: { condition: service_healthy }, registry: { condition: service_started } }
     healthcheck: *http-health
 
@@ -87,7 +90,8 @@ services:
       PORT: "4004"
       DATA_DIR: /data
       TAX_RATE: "0.13"
-    volumes: [billing-data:/data]     # independent database, in Docker
+    volumes:
+      - ./data/billing:/data     
     depends_on: { redis: { condition: service_healthy }, registry: { condition: service_started } }
     healthcheck: *http-health
 
