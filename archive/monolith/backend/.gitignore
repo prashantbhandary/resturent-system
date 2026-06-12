@@ -1,8 +1,0 @@
-node_modules/
-.env
-database.sqlite-journal
-*.log
-.DS_Store
-
-# ship the demo database with the repo (intentionally tracked)
-!database.sqlite

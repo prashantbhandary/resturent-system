@@ -2,59 +2,59 @@
 
 ## Prerequisites
 
-- Node.js 18+
-- npm
+- Docker (for the microservices API)
+- Node.js 18+ and npm (for frontend dev)
 
 ## Local development
 
 ```bash
-# Install
-cd backend && npm install
-cd ../frontend && npm install
+# Terminal 1 — the API: all microservices behind the gateway (port 8080)
+docker compose -f microservices/docker-compose.yml up --build
 
-# Configure
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-
-# Seed
-cd backend && npm run seed
-
-# Run (two terminals)
-cd backend && npm run dev
-cd frontend && npm run dev
+# Terminal 2 — the frontend dev server (port 3000)
+cd frontend && npm install
+cp .env.example .env
+npm run dev
 ```
 
-The frontend (Vite) proxies `/api` and `/socket.io` to `http://localhost:5000`, so it works out of the box.
+Point the frontend at the gateway in `frontend/.env`:
+
+```
+VITE_API_URL=http://localhost:8080
+VITE_SOCKET_URL=http://localhost:8080
+```
+
+(Or run the frontend in Docker too: `docker compose up --build` at the repo root — it is pre-configured for the gateway.)
 
 ## Production build
 
 ```bash
 cd frontend && npm run build
 # Static assets land in frontend/dist — serve via any static host
-# or copy to backend/public and serve from Express
 ```
 
-For a single-box deploy, run the backend with `pm2` or `systemd` and serve the frontend `dist/` from nginx (or behind the same Express server with a small static-mount addition).
+For a single-box deploy, run the microservices with `docker compose -f microservices/docker-compose.yml up -d` and serve the frontend `dist/` from nginx pointing API traffic at the gateway on port 8080. Kubernetes manifests live in `microservices/k8s/`.
 
 ## Environment variables
 
-### Backend (`backend/.env`)
+### Microservices
 
-| Key            | Default                       | Notes |
-|----------------|-------------------------------|-------|
-| `PORT`         | `5000`                        | API + Socket.io port |
-| `JWT_SECRET`   | `change-me`                   | **Change this for production!** |
-| `JWT_EXPIRES_IN` | `7d`                        | JWT lifetime |
-| `DATABASE_PATH`| `./database.sqlite`           | Relative to backend dir |
-| `CORS_ORIGIN`  | `http://localhost:3000`       | Frontend origin |
-| `TAX_RATE`     | `0.13`                        | Bill tax rate |
+Service configuration lives in `microservices/docker-compose.yml`. The notable ones:
+
+| Key            | Default                  | Notes |
+|----------------|--------------------------|-------|
+| `JWT_SECRET`   | `lab-secret-change-me`   | **Change this for production!** (auth-service) |
+| `REDIS_URL`    | `redis://redis:6379`     | Event bus + log channel |
+| `REGISTRY_URL` | `http://registry:4000`   | Service discovery |
+| `DATA_DIR`     | `/data`                  | SQLite location inside each container |
+| `TAX_RATE`     | `0.13`                   | Bill tax rate (billing-service) |
 
 ### Frontend (`frontend/.env`)
 
 | Key                | Default                  |
 |--------------------|--------------------------|
-| `VITE_API_URL`     | `http://localhost:5000`  |
-| `VITE_SOCKET_URL`  | `http://localhost:5000`  |
+| `VITE_API_URL`     | `http://localhost:8080`  |
+| `VITE_SOCKET_URL`  | `http://localhost:8080`  |
 
 ## QR codes
 
@@ -64,11 +64,14 @@ The QR URL is built from `window.location.origin` (e.g. `http://192.168.1.10:300
 
 ## Backup
 
-The database is a single file: `backend/database.sqlite`. Copy it for backups.
+Each data-owning service keeps its own SQLite file, bind-mounted under `microservices/data/<service>/`. Copy that directory for backups.
 
 ## Reset
 
 ```bash
-rm backend/database.sqlite
-cd backend && npm run seed
+docker compose -f microservices/docker-compose.yml down
+rm -rf microservices/data
+docker compose -f microservices/docker-compose.yml up
 ```
+
+Services recreate and reseed their databases on first start.

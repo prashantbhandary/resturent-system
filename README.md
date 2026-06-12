@@ -13,63 +13,27 @@ A complete local-first restaurant ordering platform: customers scan QR codes, ch
 
 ## Stack
 
-- Backend: Node.js + Express + Socket.io + SQLite3
+- Backend: Node.js microservices (gateway, auth, menu, order, billing, logging, registry) + Redis event bus, one SQLite database per data-owning service
 - Frontend: React 18 + Vite + TailwindCSS + React Router
 - Auth: JWT + bcrypt
 
 ## Quick Start (Docker — recommended)
 
-One command runs the whole stack:
+Two commands run the whole stack:
 
 ```bash
+# Terminal 1 — the API: all microservices behind the gateway
+docker compose -f microservices/docker-compose.yml up --build
+
+# Terminal 2 — the frontend
 docker compose up --build
 ```
 
-That builds both images, seeds the database on first start, and serves:
+That serves:
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:5001 (host port 5001 → container port 5000; remapped because macOS Control Center grabs 5000)
+- API gateway: http://localhost:8080 (routes `/api/*` to the auth/menu/order/billing services)
 
-Override the host port with `BACKEND_PORT=5002 docker compose up`. Database persists in the `backend_data` named volume; reset with `docker compose down -v`.
-
-Reseed without recreating containers:
-```bash
-docker compose exec backend sh -c "rm -f /data/database.sqlite && node src/utils/seed.js"
-docker compose restart backend
-```
-
-## Quick Start (local without Docker)
-
-### 1. Install dependencies
-
-```bash
-cd backend && npm install
-cd ../frontend && npm install
-```
-
-### 2. Configure environment
-
-```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-```
-
-Update the `JWT_SECRET` in `backend/.env` for security.
-
-### 3. Seed initial data (creates tables, menu, demo users)
-
-```bash
-cd backend && npm run seed
-```
-
-### 4. Run
-
-```bash
-# Terminal 1
-cd backend && npm run dev
-
-# Terminal 2
-cd frontend && npm run dev
-```
+Each data-owning service keeps its own SQLite database under `microservices/data/<service>/`; data persists across restarts. See [microservices/README.md](microservices/README.md) for service-level details, the scaling demo, and k8s manifests.
 
 Open:
 - Customer: http://localhost:3000/menu/table/1
@@ -123,16 +87,17 @@ Open three browser windows:
 ## Project Layout
 
 ```
-backend/
-  src/
-    config/        env + sqlite setup + schema init
-    models/        data access for users, tables, menu, orders, bills
-    controllers/   route handlers
-    routes/        Express routers
-    services/      auth, order, billing business logic
-    middleware/    auth, error handler, validation
-    socket/        Socket.io event handlers
-    utils/         jwt, logger, seed, validators
+microservices/
+  services/
+    gateway/       single entry point: routes /api/* + Socket.io to services
+    auth/          login, JWT, users (own SQLite db)
+    menu/          categories + items (own SQLite db)
+    order/         orders + kitchen flow (own SQLite db)
+    billing/       bills, payments, receipts (own SQLite db)
+    logging/       central event log fed by the Redis bus
+    registry/      service discovery for gateway load balancing
+  shared/          code shared by all services
+  k8s/             Kubernetes manifests
 frontend/
   src/
     components/    common, menu, kitchen, billing, admin

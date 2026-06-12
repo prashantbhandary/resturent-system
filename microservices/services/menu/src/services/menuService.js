@@ -1,47 +1,59 @@
 // Service layer: menu business rules (seeding, validation), no HTTP/SQL.
 const repo = require('../repositories/menuRepository');
 
-const DEFAULT_MENU = [
-  { name: 'Chicken Wings', category: 'Starters', price: 380, description: 'Spicy buffalo wings', is_veg: 0 },
-  { name: 'Paneer Tikka', category: 'Starters', price: 320, description: 'Grilled cottage cheese', is_veg: 1 },
-  { name: 'Chicken Momo', category: 'Mains', price: 250, description: 'Steamed dumplings (10 pcs)', is_veg: 0 },
-  { name: 'Veg Pizza', category: 'Pizza', price: 450, description: 'Capsicum, olives, corn', is_veg: 1 },
-  { name: 'Coke', category: 'Drinks', price: 80, description: 'Chilled, 250ml', is_veg: 1 },
-  { name: 'Ice Cream', category: 'Desserts', price: 150, description: 'Two scoops, vanilla', is_veg: 1 },
+// Same demo data as the monolith seeder, so the app looks identical.
+const SEED_CATEGORIES = [
+  { name: 'Starters', icon: '🥗', position: 1 },
+  { name: 'Mains', icon: '🍛', position: 2 },
+  { name: 'Pizza', icon: '🍕', position: 3 },
+  { name: 'Drinks', icon: '🥤', position: 4 },
+  { name: 'Desserts', icon: '🍰', position: 5 },
 ];
 
-const CATEGORY_ICONS = {
-  Starters: '🥗', Mains: '🍛', Pizza: '🍕', Drinks: '🥤', Desserts: '🍨',
-};
+const SEED_ITEMS = [
+  { cat: 'Starters', name: 'Veg Spring Rolls', desc: 'Crispy rolls with vegetables', price: 220, is_veg: 1 },
+  { cat: 'Starters', name: 'Chicken Wings', desc: 'Spicy buffalo wings', price: 380, is_veg: 0 },
+  { cat: 'Starters', name: 'Paneer Tikka', desc: 'Grilled cottage cheese', price: 320, is_veg: 1 },
+  { cat: 'Mains', name: 'Butter Chicken', desc: 'Classic creamy chicken curry', price: 480, is_veg: 0 },
+  { cat: 'Mains', name: 'Dal Makhani', desc: 'Slow-cooked black lentils', price: 320, is_veg: 1 },
+  { cat: 'Mains', name: 'Chicken Biryani', desc: 'Aromatic rice with chicken', price: 420, is_veg: 0 },
+  { cat: 'Pizza', name: 'Margherita', desc: 'Tomato, mozzarella, basil', price: 380, is_veg: 1 },
+  { cat: 'Pizza', name: 'Pepperoni', desc: 'Tomato, mozzarella, pepperoni', price: 480, is_veg: 0 },
+  { cat: 'Drinks', name: 'Coca Cola', desc: '330ml', price: 80, is_veg: 1 },
+  { cat: 'Drinks', name: 'Fresh Lime Soda', desc: 'Sweet or salty', price: 120, is_veg: 1 },
+  { cat: 'Drinks', name: 'Masala Chai', desc: 'Hot Indian tea', price: 60, is_veg: 1 },
+  { cat: 'Desserts', name: 'Gulab Jamun', desc: '2 pcs in syrup', price: 140, is_veg: 1 },
+  { cat: 'Desserts', name: 'Chocolate Brownie', desc: 'Warm, with ice cream', price: 220, is_veg: 1 },
+];
 
 async function seedIfEmpty() {
-  if ((await repo.count()) > 0) return;
-  for (const item of DEFAULT_MENU) await repo.create(item);
+  if ((await repo.countItems()) > 0) return;
+  const catIds = {};
+  for (const c of SEED_CATEGORIES) {
+    const existing = (await repo.listCategories()).find((x) => x.name === c.name);
+    catIds[c.name] = existing ? existing.id : (await repo.createCategory(c)).id;
+  }
+  for (const it of SEED_ITEMS) {
+    await repo.createItem({
+      category_id: catIds[it.cat], name: it.name, description: it.desc, price: it.price, is_veg: it.is_veg,
+    });
+  }
+  for (let i = 1; i <= 6; i++) {
+    if (!(await repo.findTableByNumber(i))) await repo.createTable({ table_number: i, capacity: 4 });
+  }
 }
 
 // Same response shape as the monolith's /api/menu, so the existing React
 // frontend works against the gateway unchanged:
-//   { categories: [{ id, name, icon, items: [...] }] }
+//   { categories: [{ id, name, icon, position, items: [...] }] }
 async function listMenuGrouped() {
-  const items = await repo.listAvailable();
-  const byCategory = new Map();
-  for (const it of items) {
-    if (!byCategory.has(it.category)) byCategory.set(it.category, []);
-    byCategory.get(it.category).push({ ...it, category_id: null, image: null });
-  }
-  let id = 0;
-  const categories = [...byCategory.entries()].map(([name, catItems]) => ({
-    id: ++id,
-    name,
-    icon: CATEGORY_ICONS[name] || '🍽️',
-    position: id,
-    items: catItems,
-  }));
-  return categories;
+  const categories = await repo.listCategories();
+  const items = await repo.listAvailableItems();
+  return categories.map((c) => ({ ...c, items: items.filter((i) => i.category_id === c.id) }));
 }
 
 async function getItem(id) {
-  const item = await repo.findById(id);
+  const item = await repo.findItem(id);
   if (!item) {
     const err = new Error('Menu item not found');
     err.status = 404;
@@ -50,14 +62,16 @@ async function getItem(id) {
   return item;
 }
 
-async function addItem({ name, category, price, description, is_veg }) {
-  if (!name || !category || !(price > 0)) {
-    const err = new Error('name, category and positive price required');
+async function addItem({ category_id, name, description, price, image, available, is_veg }) {
+  if (!category_id || !name || price === undefined) {
+    const err = new Error('category_id, name, price required');
     err.status = 400;
     throw err;
   }
-  const { lastID } = await repo.create({ name, category, price, description, is_veg });
-  return repo.findById(lastID);
+  return repo.createItem({
+    category_id, name, description, price: parseFloat(price), image,
+    available: available !== false, is_veg,
+  });
 }
 
 module.exports = { seedIfEmpty, listMenuGrouped, getItem, addItem };

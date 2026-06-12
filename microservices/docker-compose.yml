@@ -113,6 +113,9 @@ services:
       SERVICE_NAME: gateway
       PORT: "8080"
       RATE_LIMIT_PER_MIN: "100"
+      DATA_DIR: /data                 # tenant config.json lives here
+    volumes:
+      - ./data/gateway:/data
     ports: ["8080:8080"]              # the ONLY port exposed to the outside
     depends_on: { redis: { condition: service_healthy }, registry: { condition: service_started } }
     healthcheck: *http-health

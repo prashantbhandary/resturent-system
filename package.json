@@ -2,7 +2,6 @@
   "name": "restaurant-system",
   "version": "1.0.0",
   "scripts": {
-    "start": "cd backend && node src/utils/seed.js; node src/server.js",
-    "postinstall": "cd backend && npm install"
+    "start": "docker compose -f microservices/docker-compose.yml up --build"
   }
 }

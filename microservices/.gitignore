@@ -1,0 +1,2 @@
+# per-service SQLite databases + gateway config (runtime state, not code)
+data/

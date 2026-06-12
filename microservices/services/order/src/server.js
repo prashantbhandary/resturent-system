@@ -1,10 +1,11 @@
 // order-service: owns orders. Validates against menu-service (sync) and
-// announces changes on the event bus (async).
+// announces changes on the event bus (async). Also listens for bill.paid so
+// orders flip to 'paid' without billing-service ever calling it directly.
 const express = require('express');
 const logger = require('../../../shared/logger');
 const { traceMiddleware } = require('../../../shared/trace');
 const { registerSelf } = require('../../../shared/discovery');
-const { createPublisher } = require('../../../shared/events');
+const { createPublisher, subscribe } = require('../../../shared/events');
 const repo = require('./repositories/orderRepository');
 const orderService = require('./services/orderService');
 
@@ -61,6 +62,12 @@ app.patch('/api/kitchen/orders/:id/items/:itemId/status', async (req, res, next)
   catch (err) { next(err); }
 });
 
+// Order-side dashboard numbers; the gateway composes them with billing's.
+app.get('/api/admin/stats', async (req, res, next) => {
+  try { res.json(await orderService.stats()); }
+  catch (err) { next(err); }
+});
+
 app.get('/health', (req, res) => res.json({ ok: true, service: 'order-service', uptime: process.uptime() }));
 
 app.use((err, req, res, next) => res.status(err.status || 500).json({ error: err.message }));
@@ -69,6 +76,7 @@ async function start() {
   await logger.initLogger(REDIS_URL);
   await repo.init();
   orderService.setPublisher(await createPublisher(REDIS_URL));
+  await subscribe(REDIS_URL, { 'bill.paid': orderService.onBillPaid });
   app.listen(PORT, async () => {
     logger.info(`listening on ${PORT}`);
     await registerSelf('order-service', PORT);
