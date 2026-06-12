@@ -45,7 +45,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-orange-50/30 to-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-background to-amber-50/40 p-4 dark:from-orange-950/20 dark:via-background dark:to-background">
       <motion.div
         className="w-full max-w-sm"
         initial={{ opacity: 0, y: 24 }}
@@ -54,11 +54,11 @@ export default function LoginPage() {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary shadow-lg shadow-primary/30 mb-4">
+          <div className="glow-primary inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-600 to-primary mb-4">
             <Utensils size={26} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold">Welcome back</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign in to your staff account</p>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">Welcome back</h1>
+          <p className="text-sm text-muted-foreground mt-1.5">Service starts with you — sign in</p>
         </div>
 
         <Card className="shadow-card-hover">

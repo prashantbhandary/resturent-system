@@ -29,15 +29,15 @@ const itemVariants = {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-white">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50/80 via-background to-background dark:from-orange-950/20">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-border">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-lg">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+          <div className="flex items-center gap-2 text-lg font-bold">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-600 to-primary shadow-sm">
               <Utensils size={16} className="text-white" />
             </div>
-            DineQR
+            <span className="font-display tracking-tight">DineQR</span>
           </div>
           <Link to="/login">
             <Button size="sm">Staff Login</Button>
@@ -48,26 +48,34 @@ export default function LandingPage() {
       {/* Hero */}
       <main className="max-w-6xl mx-auto px-4 py-16">
         <motion.div
-          className="text-center max-w-2xl mx-auto"
+          className="relative text-center max-w-2xl mx-auto"
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
         >
-          <span className="inline-flex items-center gap-1.5 rounded-full border bg-orange-50 px-3 py-1 text-xs font-medium text-orange-600 mb-5">
+          {/* floating garnish around the headline */}
+          <span className="pointer-events-none absolute -left-10 top-2 hidden animate-float text-3xl opacity-60 sm:block">🍜</span>
+          <span className="pointer-events-none absolute -right-8 top-16 hidden animate-float text-3xl opacity-60 [animation-delay:1.2s] sm:block">🍕</span>
+          <span className="pointer-events-none absolute -left-2 bottom-0 hidden animate-float text-2xl opacity-50 [animation-delay:2s] sm:block">🥂</span>
+
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700 mb-6 dark:border-orange-900 dark:bg-orange-950/40 dark:text-orange-300">
             <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-            Live Demo Running
+            Kitchen is live
           </span>
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-balance mb-4">
-            Restaurant QR Ordering
-            <span className="text-primary"> System</span>
+          <h1 className="font-display text-5xl sm:text-6xl font-semibold tracking-tight text-balance mb-5 leading-[1.05]">
+            Where every table
+            <span className="block bg-gradient-to-r from-orange-600 via-primary to-amber-500 bg-clip-text text-transparent">
+              orders with a scan
+            </span>
           </h1>
-          <p className="text-lg text-muted-foreground mb-8 text-balance">
-            Customers order from their phones. Kitchen gets real-time updates. Billing is instant. All in one system.
+          <p className="text-lg text-muted-foreground mb-9 text-balance leading-relaxed">
+            Guests browse a beautiful menu from their phone, the kitchen cooks to a live
+            ticket, and the bill arrives before they ask. Dinner, orchestrated.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link to="/menu/table/1">
-              <Button size="lg" className="gap-2 shadow-lg shadow-primary/20">
-                Try Customer Menu <ArrowRight size={16} />
+              <Button size="lg" className="glow-primary gap-2 bg-gradient-to-r from-orange-600 to-primary">
+                Browse the menu <ArrowRight size={16} />
               </Button>
             </Link>
             <Link to="/login">
@@ -105,7 +113,7 @@ export default function LandingPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
         >
-          <h2 className="text-center text-xl font-bold mb-6">Open a Portal</h2>
+          <h2 className="text-center font-display text-2xl font-semibold tracking-tight mb-6">Open a Portal</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {portals.map((p) => (
               <Link key={p.label} to={p.to}>

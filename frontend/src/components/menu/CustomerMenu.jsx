@@ -119,18 +119,23 @@ export default function CustomerMenu({ tableId }) {
 
   return (
     <div className="min-h-screen bg-background pb-28">
-      {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-orange-600 px-4 pb-6 pt-5 text-white">
-        <div className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-12 left-10 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+      {/* Hero — the first taste of the place */}
+      <div className="relative overflow-hidden rounded-b-[2rem] bg-gradient-to-br from-orange-700 via-primary to-amber-500 px-4 pb-10 pt-6 text-white shadow-hero">
+        <div className="texture-dots pointer-events-none absolute inset-0 text-white/[0.07]" />
+        <div className="pointer-events-none absolute -right-10 -top-12 h-48 w-48 rounded-full bg-amber-300/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 left-8 h-40 w-40 rounded-full bg-orange-950/30 blur-3xl" />
+        {/* floating garnish */}
+        <span className="pointer-events-none absolute right-6 top-16 animate-float text-2xl opacity-30 [animation-delay:0.5s]">🌿</span>
+        <span className="pointer-events-none absolute right-20 top-7 animate-float text-xl opacity-20">✨</span>
         <div className="relative flex items-start justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
-              <Utensils size={18} />
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/25 bg-white/15 shadow-inner backdrop-blur">
+              <Utensils size={19} />
             </div>
             <div>
-              <h1 className="text-lg font-bold leading-none">{config.restaurant_name}</h1>
-              <p className="mt-1 text-xs text-white/80">Order fresh, served fast</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-200">Welcome to</p>
+              <h1 className="font-display text-2xl font-semibold leading-tight">{config.restaurant_name}</h1>
+              <p className="mt-0.5 text-xs italic text-white/75">Cooked fresh, the moment you order</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -167,12 +172,19 @@ export default function CustomerMenu({ tableId }) {
           </div>
         </div>
 
-        <div className="relative mt-5 flex items-center gap-2">
-          <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium backdrop-blur">
-            Table {tableId}
+        <div className="relative mt-6 flex items-center gap-2">
+          <span className="rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
+            🍽️ Table {tableId}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs backdrop-blur">
+          <span className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs backdrop-blur">
             <Leaf size={12} /> Veg &amp; Non-veg
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs backdrop-blur">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-300" />
+            </span>
+            Kitchen open
           </span>
         </div>
       </div>
@@ -244,10 +256,12 @@ export default function CustomerMenu({ tableId }) {
       {/* Menu grid */}
       <div className="px-4 pt-4">
         {activeCategory && !search && (
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-base font-bold">{activeCategory.name}</h2>
-            <span className="text-xs text-muted-foreground">
-              {filteredItems.length} item{filteredItems.length === 1 ? '' : 's'}
+          <div className="mb-4 flex items-baseline justify-between">
+            <h2 className="font-display text-xl font-semibold tracking-tight">
+              {activeCategory.icon} {activeCategory.name}
+            </h2>
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {filteredItems.length} dish{filteredItems.length === 1 ? '' : 'es'}
             </span>
           </div>
         )}
@@ -291,15 +305,15 @@ export default function CustomerMenu({ tableId }) {
           >
             <button
               onClick={() => setCartOpen(true)}
-              className="flex w-full items-center justify-between rounded-2xl bg-primary px-5 py-4 text-primary-foreground shadow-lg shadow-primary/30"
+              className="glow-primary flex w-full items-center justify-between rounded-2xl bg-gradient-to-r from-orange-600 to-primary px-5 py-4 text-primary-foreground"
             >
               <div className="flex items-center gap-3">
-                <span className="rounded-lg bg-white/20 px-2 py-0.5 text-sm font-bold">
+                <span key={cart.count} className="animate-pop rounded-lg bg-white/25 px-2.5 py-0.5 text-sm font-bold tabular-nums">
                   {cart.count}
                 </span>
-                <span className="font-semibold">View Cart</span>
+                <span className="font-semibold">View your order</span>
               </div>
-              <span className="font-bold">{formatCurrency(cart.subtotal)}</span>
+              <span className="font-display text-lg font-semibold">{formatCurrency(cart.subtotal)}</span>
             </button>
           </motion.div>
         )}

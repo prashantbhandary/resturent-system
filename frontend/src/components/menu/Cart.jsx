@@ -40,7 +40,7 @@ export default function Cart({ open, onClose, onSubmit }) {
       <SheetHeader>
         <div className="flex items-center gap-2">
           <ShoppingBag size={18} />
-          <SheetTitle>Your Cart</SheetTitle>
+          <SheetTitle className="font-display tracking-tight">Your Order</SheetTitle>
           {items.length > 0 && (
             <span className="ml-1 rounded-full bg-primary text-white text-xs font-bold px-2 py-0.5">
               {items.reduce((s, i) => s + i.quantity, 0)}
@@ -111,15 +111,18 @@ export default function Cart({ open, onClose, onSubmit }) {
               <span>{formatCurrency(subtotal * 0.13)}</span>
             </div>
             <Separator />
-            <div className="flex justify-between font-bold text-base">
+            <div className="flex items-baseline justify-between text-base font-bold">
               <span>Total (est.)</span>
-              <span className="text-primary">{formatCurrency(subtotal * 1.13)}</span>
+              <span className="font-display text-xl text-primary">{formatCurrency(subtotal * 1.13)}</span>
             </div>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={clear} className="flex-1">Clear</Button>
-            <Button onClick={onSubmit} className="flex-2 flex-1 shadow-lg shadow-primary/20">
-              Place Order
+            <Button
+              onClick={onSubmit}
+              className="glow-primary flex-[2] bg-gradient-to-r from-orange-600 to-primary font-semibold"
+            >
+              Send to the kitchen 🔥
             </Button>
           </div>
         </SheetFooter>

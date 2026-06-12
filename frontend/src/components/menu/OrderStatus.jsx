@@ -13,12 +13,12 @@ const STEPS = [
 ];
 
 const STATUS_META = {
-  pending:   { badge: 'pending', text: 'Order received' },
-  accepted:  { badge: 'info', text: 'Accepted by kitchen' },
-  preparing: { badge: 'warning', text: 'Chef is preparing your food' },
-  ready:     { badge: 'success', text: 'Ready to serve!' },
-  served:    { badge: 'success', text: 'Enjoy your meal!' },
-  paid:      { badge: 'success', text: 'Paid — Thank you!' },
+  pending:   { badge: 'pending', text: 'Order received', emoji: '🧾' },
+  accepted:  { badge: 'info', text: 'Accepted by kitchen', emoji: '🔔' },
+  preparing: { badge: 'warning', text: 'Chef is cooking your food', emoji: '👨‍🍳' },
+  ready:     { badge: 'success', text: 'Ready — coming to you!', emoji: '🛎️' },
+  served:    { badge: 'success', text: 'Enjoy your meal!', emoji: '🍽️' },
+  paid:      { badge: 'success', text: 'Paid — thank you!', emoji: '💛' },
 };
 
 function stepIndex(status) {
@@ -37,15 +37,26 @@ export default function OrderStatus({ order, onRequestBill }) {
       className="bg-card border border-border rounded-2xl p-4 shadow-card"
     >
       <div className="flex items-start justify-between mb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Order #{order.id}</span>
-            <Badge variant={meta.badge}>{meta.text}</Badge>
+        <div className="flex items-start gap-2.5">
+          {/* the cooking moment, animated */}
+          <div className="relative mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-lg">
+            {order.status === 'preparing' && (
+              <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 text-[9px]">
+                <span className="inline-block animate-steam">♨️</span>
+              </span>
+            )}
+            <span className={order.status === 'preparing' ? 'animate-pulse' : ''}>{meta.emoji}</span>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">{timeAgo(order.created_at)}</p>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">Order #{order.id}</span>
+              <Badge variant={meta.badge}>{meta.text}</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">{timeAgo(order.created_at)}</p>
+          </div>
         </div>
         <div className="text-right">
-          <p className="font-bold text-primary">{formatCurrency(order.total)}</p>
+          <p className="font-display text-base font-semibold text-primary">{formatCurrency(order.total)}</p>
           <p className="text-xs text-muted-foreground">{order.items_count} items</p>
         </div>
       </div>
@@ -57,9 +68,13 @@ export default function OrderStatus({ order, onRequestBill }) {
             const done = i <= currentStep;
             return (
               <div key={step.key} className="flex items-center gap-1 flex-1">
-                <div className={`flex-1 h-1 rounded-full transition-colors duration-500 ${done ? 'bg-primary' : 'bg-secondary'}`} />
+                <div
+                  className={`h-1 flex-1 rounded-full transition-colors duration-500 ${
+                    done ? 'bg-gradient-to-r from-orange-500 to-primary' : 'bg-secondary'
+                  }`}
+                />
                 {i === STEPS.slice(0, 4).length - 1 && (
-                  <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors duration-500 ${done ? 'bg-primary' : 'bg-secondary'}`}>
+                  <div className={`flex h-4 w-4 items-center justify-center rounded-full transition-colors duration-500 ${done ? 'bg-primary' : 'bg-secondary'}`}>
                     {done && <CheckCircle size={10} className="text-white" />}
                   </div>
                 )}

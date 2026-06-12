@@ -1,4 +1,5 @@
 @import '@fontsource-variable/inter';
+@import '@fontsource-variable/fraunces';
 
 @tailwind base;
 @tailwind components;
@@ -6,37 +7,39 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 24.6 95% 53.1%;
-    --primary-foreground: 60 9% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 94%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
+    /* Warm, appetizing light palette — cream paper, flame primary.
+       Whites are tinted toward candlelight so food colors feel rich. */
+    --background: 36 60% 98%;
+    --foreground: 24 30% 12%;
+    --card: 33 70% 99%;
+    --card-foreground: 24 30% 12%;
+    --popover: 33 70% 99%;
+    --popover-foreground: 24 30% 12%;
+    --primary: 21 92% 50%;
+    --primary-foreground: 40 60% 98%;
+    --secondary: 33 45% 94%;
+    --secondary-foreground: 24 30% 14%;
+    --muted: 33 40% 93%;
+    --muted-foreground: 25 14% 42%;
+    --accent: 30 55% 91%;
+    --accent-foreground: 24 30% 14%;
+    --destructive: 0 78% 54%;
     --destructive-foreground: 0 0% 98%;
-    --success: 142 72% 29%;
+    --success: 145 60% 30%;
     --success-foreground: 0 0% 98%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 24.6 95% 53.1%;
-    --radius: 0.625rem;
-    --sidebar: 222 47% 11%;
-    --sidebar-foreground: 210 40% 96%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-border: 217 33% 20%;
-    --sidebar-ring: 24.6 95% 53.1%;
+    --border: 32 32% 88%;
+    --input: 32 32% 88%;
+    --ring: 21 92% 50%;
+    --radius: 0.875rem;
+    --sidebar: 24 32% 10%;
+    --sidebar-foreground: 36 40% 94%;
+    --sidebar-accent: 23 26% 16%;
+    --sidebar-border: 23 26% 19%;
+    --sidebar-ring: 21 92% 50%;
     /* Chart palette (brand accent + complementary hues) */
-    --chart-1: 24.6 95% 53.1%;
+    --chart-1: 21 92% 50%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 44%;
     --chart-4: 43 74% 52%;
@@ -44,35 +47,37 @@
   }
 
   .dark {
-    --background: 222 47% 7%;
-    --foreground: 210 40% 96%;
-    --card: 222 44% 10%;
-    --card-foreground: 210 40% 96%;
-    --popover: 222 44% 10%;
-    --popover-foreground: 210 40% 96%;
-    --primary: 24.6 95% 53.1%;
-    --primary-foreground: 222 47% 9%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 96%;
-    --muted: 217 33% 15%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 19%;
-    --accent-foreground: 210 40% 96%;
+    /* Candle-lit dark: warm charcoal-browns instead of blue-blacks,
+       so the room feels like dinner, not a server rack. */
+    --background: 24 24% 7%;
+    --foreground: 36 40% 94%;
+    --card: 24 22% 10%;
+    --card-foreground: 36 40% 94%;
+    --popover: 24 22% 10%;
+    --popover-foreground: 36 40% 94%;
+    --primary: 24 94% 55%;
+    --primary-foreground: 24 30% 8%;
+    --secondary: 23 20% 15%;
+    --secondary-foreground: 36 40% 94%;
+    --muted: 23 18% 14%;
+    --muted-foreground: 30 14% 65%;
+    --accent: 23 22% 17%;
+    --accent-foreground: 36 40% 94%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --success: 142 64% 42%;
+    --success: 145 55% 42%;
     --success-foreground: 0 0% 98%;
     --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 9%;
-    --border: 217 33% 20%;
-    --input: 217 33% 22%;
-    --ring: 24.6 95% 53.1%;
-    --sidebar: 222 47% 5%;
-    --sidebar-foreground: 210 40% 90%;
-    --sidebar-accent: 217 33% 14%;
-    --sidebar-border: 217 33% 14%;
-    --sidebar-ring: 24.6 95% 53.1%;
-    --chart-1: 24.6 95% 53.1%;
+    --warning-foreground: 24 30% 8%;
+    --border: 23 18% 18%;
+    --input: 23 18% 20%;
+    --ring: 24 94% 55%;
+    --sidebar: 24 26% 5%;
+    --sidebar-foreground: 36 36% 90%;
+    --sidebar-accent: 23 20% 13%;
+    --sidebar-border: 23 20% 13%;
+    --sidebar-ring: 24 94% 55%;
+    --chart-1: 24 94% 55%;
     --chart-2: 173 58% 49%;
     --chart-3: 197 50% 58%;
     --chart-4: 43 74% 60%;
@@ -111,6 +116,26 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .text-balance { text-wrap: balance; }
+
+  /* Display serif for headlines — the "menu card at a fine restaurant" voice */
+  .font-display {
+    font-family: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+    font-variation-settings: 'SOFT' 60, 'WONK' 0, 'opsz' 50;
+    letter-spacing: -0.01em;
+  }
+
+  /* Subtle dotted-linen texture for hero surfaces */
+  .texture-dots {
+    background-image: radial-gradient(currentColor 0.75px, transparent 0.75px);
+    background-size: 14px 14px;
+  }
+
+  /* Warm glow behind floating CTAs (cart bar, order button) */
+  .glow-primary {
+    box-shadow:
+      0 10px 30px -8px hsl(var(--primary) / 0.45),
+      0 4px 10px -4px hsl(var(--primary) / 0.3);
+  }
 }
 
 @media print {

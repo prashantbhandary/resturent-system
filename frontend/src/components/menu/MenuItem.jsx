@@ -46,8 +46,8 @@ export default function MenuItemCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.4) }}
-      whileHover={{ y: -3 }}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-shadow hover:shadow-card-hover"
+      whileHover={{ y: -4 }}
+      className="group flex flex-col overflow-hidden rounded-[1.25rem] border border-border/70 bg-card shadow-card transition-shadow duration-300 hover:shadow-card-hover"
     >
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden">
@@ -57,33 +57,39 @@ export default function MenuItemCard({
             alt={item.name}
             loading="lazy"
             onError={() => setImgFailed(true)}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
           />
         ) : (
           <div
             className={cn(
-              'flex h-full w-full items-center justify-center bg-gradient-to-br text-5xl',
+              'flex h-full w-full items-center justify-center bg-gradient-to-br text-5xl transition-transform duration-700 group-hover:scale-110',
               gradient
             )}
           >
-            {getFoodEmoji(item.name)}
+            <span className="drop-shadow-sm">{getFoodEmoji(item.name)}</span>
           </div>
         )}
+        {/* warm vignette so the photo reads like a plated dish */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
 
         <div className="absolute left-2 top-2">
           <DietDot veg={veg} />
         </div>
 
-        <div className="absolute bottom-2 left-2 rounded-full bg-background/90 px-2.5 py-1 text-xs font-bold text-foreground shadow-sm backdrop-blur">
-          {formatCurrency(item.price)}
+        <div className="absolute bottom-2 left-2 rounded-full bg-white/95 px-3 py-1 shadow-sm backdrop-blur dark:bg-black/70">
+          <span className="font-display text-[13px] font-semibold text-foreground">
+            {formatCurrency(item.price)}
+          </span>
         </div>
       </div>
 
       {/* Info */}
-      <div className="flex flex-1 flex-col p-3">
-        <h3 className="line-clamp-1 text-sm font-semibold leading-snug">{item.name}</h3>
+      <div className="flex flex-1 flex-col p-3.5">
+        <h3 className="line-clamp-1 font-display text-[15px] font-semibold leading-snug tracking-tight">
+          {item.name}
+        </h3>
         {item.description && (
-          <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
             {item.description}
           </p>
         )}
